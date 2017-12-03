@@ -11,7 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
@@ -24,13 +26,13 @@ import java.util.TimerTask;
  */
 
 public class MyBanner extends LinearLayout {
-    private ViewPager vp;
-    private LinearLayout ll;
-    private List<ImageView>imgList=new ArrayList<>();
-    private Handler handler=new Handler();
-    private int index=1;
-    private int position;
+    int pos;
+    List<ImageView> imgList = new ArrayList<>();
+    Handler handler = new Handler();
+    int num=0;
 
+    private ViewPager viewPager;
+    private LinearLayout linearLayout;
 
     public MyBanner(Context context) {
         this(context,null);
@@ -43,59 +45,68 @@ public class MyBanner extends LinearLayout {
 
     public MyBanner(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        LayoutInflater.from(context).inflate(R.layout.banner,this);
-        vp=findViewById(R.id.vp);
-        ll=findViewById(R.id.ll);
+        View view = LayoutInflater.from(context).inflate(R.layout.banner,null);
+        addView(view);
+        viewPager = view.findViewById(R.id.viewpager);
+        linearLayout = view.findViewById(R.id.linear);
     }
 
-    public void setData(List<String> list){
-        if (list==null){
-            throw new RuntimeException("集合不能为空");
-        }
-        for (int i = 0; i <list.size() ; i++) {
-            ImageView imageView=new ImageView(getContext());
+    public void setData(final List<String> data, final List<String> listurl) {
+        for (int i=0;i<data.size();i++){
+            ImageView imageView = new ImageView(getContext());
             imgList.add(imageView);
-            ImageLoader.getInstance().displayImage(list.get(i),imageView);
+            Glide.with(getContext()).load(data.get(i)).into(imageView);
 
+            //图片的点击事件
             imageView.setOnClickListener(new OnClickListener() {
                 @Override
-                public void onClick(View view) {
-                    Intent intent=new Intent(getContext(),WebViewActivity.class);
-                    intent.putExtra("url","https://www.baidu.com/");
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(),WebViewActivity.class);
+                    Toast.makeText(getContext(),pos+"",Toast.LENGTH_SHORT).show();
+                    intent.putExtra("url",listurl.get(pos));
                     getContext().startActivity(intent);
                 }
             });
 
             //创建小圆点
+            ImageView ivCircle = new ImageView(getContext());
+            LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            layoutParams.leftMargin = 5;
+            ivCircle.setLayoutParams(layoutParams);
 
-            ImageView ivCircle=new ImageView(getContext());
-            LayoutParams laoutParams=new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-            laoutParams.leftMargin=5;
-            ivCircle.setLayoutParams(laoutParams);
-            ivCircle.setBackgroundResource(R.drawable.circle_nomal);
-            ll.addView(ivCircle);
-
+            //  ImageView iv = (ImageView) linearLayout.getChildAt(0);
+            ivCircle.setBackgroundResource(R.drawable.shape01);
+            linearLayout.addView(ivCircle);
         }
-
-        ImageView iv=(ImageView)ll.getChildAt(0);
-        iv.setBackgroundResource(R.drawable.circle_select);
-        MyAdapter adapter = new MyAdapter();
-        vp.setAdapter(adapter);
-        vp.setOnPageChangeListener(new MyPageChangeListener());
-
-        Timer timer=new Timer();
+        ImageView iv = (ImageView) linearLayout.getChildAt(0);
+        iv.setBackgroundResource(R.drawable.shape02);
+        //设置适配器
+        MyAdapter myAdapter = new MyAdapter();
+        viewPager.setAdapter(myAdapter);
+        //设置监听
+        viewPager.setOnPageChangeListener(new MyPageChangeListener());
+        //定时器,无线轮播
+        Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        vp.setCurrentItem((++index)%imgList.size());
+                        //无线轮播设置当前条目
+                        viewPager.setCurrentItem((num++)%imgList.size());
                     }
                 });
             }
-        },1000,3000);
-
+        },1000,2000);
+    }
+    //重置小圆点
+    private void reset() {
+        int childCount = linearLayout.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            ImageView iv = (ImageView) linearLayout.getChildAt(i);
+            iv.setBackgroundResource(R.drawable.shape01);
+        }
     }
 
     class MyPageChangeListener implements ViewPager.OnPageChangeListener{
@@ -109,8 +120,9 @@ public class MyBanner extends LinearLayout {
         public void onPageSelected(int position) {
             //重置所有的圆点装点
             reset();
-            ImageView iv = (ImageView) ll.getChildAt(position);
-            iv.setBackgroundResource(R.drawable.circle_select);
+            pos = position;
+            ImageView iv = (ImageView) linearLayout.getChildAt(position);
+            iv.setBackgroundResource(R.drawable.shape02);
         }
 
         @Override
@@ -118,15 +130,7 @@ public class MyBanner extends LinearLayout {
 
         }
     }
-
-    private void reset() {
-        int childCount = ll.getChildCount();
-        for (int i = 0; i < childCount; i++) {
-            ImageView iv = (ImageView) ll.getChildAt(i);
-            iv.setBackgroundResource(R.drawable.circle_nomal);
-        }
-    }
-
+    //创建一个适配器
     class MyAdapter extends PagerAdapter{
 
         @Override
@@ -141,15 +145,14 @@ public class MyBanner extends LinearLayout {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            ImageView imageView=imgList.get(position);
+            ImageView imageView = imgList.get(position);
             container.addView(imageView);
             return imageView;
         }
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-            container.removeView((View)object);
-
+            container.removeView((View) object);
         }
     }
 }
