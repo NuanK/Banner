@@ -5,9 +5,7 @@ import android.app.Application;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
-/**
- * Created by ASUS on 2017/12/2.
- */
+
 
 public class MyApp extends Application {
     @Override

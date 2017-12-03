@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Created by ASUS on 2017/12/2.
- */
 
 public class MyBanner extends LinearLayout {
     int pos;
